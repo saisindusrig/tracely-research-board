@@ -26,10 +26,10 @@ const claimSchema = new Schema(
       enum: ["UNVERIFIED", "VERIFIED", "DISPUTED"],
       default: "UNVERIFIED",
     },
-    
+
     boardId: {
       type: Schema.Types.ObjectId,
-      ref: "Boards", 
+      ref: "Board",
       required: true,
     },
 
@@ -38,9 +38,17 @@ const claimSchema = new Schema(
       ref: "User",
       required: true,
     },
+
+    // Canvas placement, saved when the card is dragged.
+    position: {
+      x: { type: Number },
+      y: { type: Number },
+    },
   },
-  { timestamps: true } 
+  { timestamps: true }
 );
+
+claimSchema.index({ boardId: 1, createdAt: 1 });
 
 const Claim = models.Claim || mongoose.model("Claim", claimSchema);
 

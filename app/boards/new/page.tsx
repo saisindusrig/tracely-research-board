@@ -1,77 +1,32 @@
-"use client";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { ArrowLeft } from "@/components/icons";
+import { getCurrentUser } from "@/lib/auth";
+import SiteShell from "@/components/SiteShell";
+import BoardForm from "@/components/BoardForm";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
+export const metadata: Metadata = {
+  title: "Create a research board",
+  description: "Start a new investigation and organize the evidence.",
+};
 
-export default function NewBoardPage() {
-  const router = useRouter();
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [isPublic, setIsPublic] = useState(false);
-  const [error, setError] = useState("");
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-
-    try {
-      const res = await fetch("/api/boards", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, description, isPublic }),
-      });
-
-      if (res.ok) {
-        router.push("/dashboard");
-      } else {
-        const data = await res.json();
-        setError(data.message || "Failed to create board.");
-      }
-    } catch (err) {
-      setError("Something went wrong.");
-    }
-  };
+export default async function NewBoardPage() {
+  if (!(await getCurrentUser())) redirect("/login?callbackUrl=/boards/new");
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-4 bg-slate-50">
-      <form onSubmit={handleSubmit} className="w-full max-w-md bg-white p-8 rounded-lg shadow-sm border border-slate-200 flex flex-col gap-4">
-        <h1 className="text-2xl font-bold text-slate-900">Create New Board</h1>
-        
-        {error && <p className="text-red-600 text-sm bg-red-50 p-2 rounded">{error}</p>}
-        
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-slate-700">Title</label>
-          <input 
-            required 
-            type="text" 
-            className="border border-slate-300 p-2 rounded focus:outline-blue-500" 
-            value={title} 
-            onChange={(e) => setTitle(e.target.value)} 
-          />
+    <SiteShell footer={false}>
+      <div className="page-container max-w-xl py-8 sm:py-12">
+        <Link href="/boards" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="size-4" aria-hidden />
+          Back to boards
+        </Link>
+        <h1 className="mt-6 font-heading text-4xl text-foreground">Start a new board</h1>
+        <p className="mt-2 text-muted-foreground">Start an investigation and organize the evidence.</p>
+        <div className="mt-8">
+          <BoardForm mode="create" cancelHref="/boards" />
         </div>
-
-        <div className="flex flex-col gap-1">
-          <label className="text-sm font-medium text-slate-700">Description</label>
-          <textarea 
-            className="border border-slate-300 p-2 rounded focus:outline-blue-500" 
-            value={description} 
-            onChange={(e) => setDescription(e.target.value)} 
-          />
-        </div>
-
-        <div className="flex items-center gap-2 mt-2">
-          <input 
-            type="checkbox" 
-            checked={isPublic} 
-            onChange={(e) => setIsPublic(e.target.checked)} 
-            className="w-4 h-4"
-          />
-          <label className="text-sm text-slate-700">Make this board public</label>
-        </div>
-
-        <Button type="submit" className="mt-4">Create Workspace</Button>
-      </form>
-    </main>
+      </div>
+    </SiteShell>
   );
 }

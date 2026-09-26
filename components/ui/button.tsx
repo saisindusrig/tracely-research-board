@@ -2,30 +2,34 @@ import { Button as ButtonPrimitive } from "@base-ui/react/button"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
 
-const buttonVariants = cva(
-  "group/button inline-flex shrink-0 items-center justify-center rounded-none border border-transparent bg-clip-padding text-xs font-semibold tracking-widest whitespace-nowrap uppercase transition-all outline-none select-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/20 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5",
+// Links styled as buttons should use `buttonVariants()` on the <Link> itself
+// rather than wrapping a <Button> in a <Link> (a button inside an anchor is
+// invalid HTML and breaks keyboard focus).
+const buttonStyles = cva(
+  "group/button inline-flex shrink-0 items-center justify-center rounded-md border bg-clip-padding font-sans text-sm font-medium whitespace-nowrap transition-[background-color,transform,box-shadow] duration-100 outline-none select-none focus-visible:ring-2 focus-visible:ring-highlighter focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50 aria-invalid:border-destructive [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/80",
+        // Ink buttons sit on a hard shadow and sink into it when pressed.
+        default:
+          "border-foreground bg-primary text-primary-foreground shadow-[2px_2px_0_hsl(var(--foreground))] hover:bg-primary-hover active:translate-x-[2px] active:translate-y-[2px] active:shadow-none",
         outline:
-          "border-border bg-transparent hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-input/30",
+          "border-foreground bg-card text-foreground shadow-[2px_2px_0_hsl(var(--border))] hover:bg-secondary active:translate-x-[2px] active:translate-y-[2px] active:shadow-none aria-expanded:bg-secondary",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-[color-mix(in_oklch,var(--secondary),var(--foreground)_5%)] aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
+          "border-border bg-secondary text-secondary-foreground hover:border-input hover:bg-[hsl(43_38%_82%)] aria-expanded:bg-[hsl(43_38%_82%)]",
         ghost:
-          "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:hover:bg-muted/50",
+          "border-transparent text-foreground hover:bg-secondary aria-expanded:bg-secondary",
         destructive:
-          "bg-destructive/10 text-destructive hover:bg-destructive/20 focus-visible:border-destructive/40 focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40",
-        link: "text-primary underline underline-offset-4 hover:underline",
+          "border-foreground bg-destructive text-destructive-foreground shadow-[2px_2px_0_hsl(var(--foreground))] hover:bg-[hsl(9_64%_37%)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none",
+        link: "link-pencil h-auto border-transparent px-0 text-primary",
       },
       size: {
-        default:
-          "h-10 gap-1.5 px-6 has-data-[icon=inline-end]:pr-4 has-data-[icon=inline-start]:pl-4",
-        xs: "h-7 gap-1 px-3 has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-3",
-        sm: "h-9 gap-1 px-4 has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3",
-        lg: "h-11 gap-1.5 px-8 has-data-[icon=inline-end]:pr-5 has-data-[icon=inline-start]:pl-5",
+        default: "h-10 gap-2 px-4",
+        xs: "h-7 gap-1 px-2.5 text-xs [&_svg:not([class*='size-'])]:size-3.5",
+        sm: "h-9 gap-1.5 px-3",
+        lg: "h-11 gap-2 px-6 text-[15px]",
         icon: "size-10",
-        "icon-xs": "size-7 [&_svg:not([class*='size-'])]:size-3",
+        "icon-xs": "size-7 [&_svg:not([class*='size-'])]:size-3.5",
         "icon-sm": "size-9",
         "icon-lg": "size-11",
       },
@@ -37,16 +41,21 @@ const buttonVariants = cva(
   }
 )
 
+/** Class names for button-styled elements, merged so callers can override (e.g. `hidden`). */
+function buttonVariants({ className, ...opts }: VariantProps<typeof buttonStyles> & { className?: string } = {}) {
+  return cn(buttonStyles(opts), className)
+}
+
 function Button({
   className,
   variant = "default",
   size = "default",
   ...props
-}: ButtonPrimitive.Props & VariantProps<typeof buttonVariants>) {
+}: ButtonPrimitive.Props & VariantProps<typeof buttonStyles>) {
   return (
     <ButtonPrimitive
       data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(buttonStyles({ variant, size, className }))}
       {...props}
     />
   )

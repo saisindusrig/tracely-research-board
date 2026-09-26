@@ -1,47 +1,210 @@
 @import "tailwindcss";
 
+/* ---------------------------------------------------------------
+   Warrant: field notebook theme.
+   Cream paper, ink text, red pencil for notes, green ink for
+   support, a highlighter for emphasis. Every text/background pair
+   used here passes WCAG AA on the paper color.
+   --------------------------------------------------------------- */
 :root {
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
-  --primary: 221.2 83.2% 53.3%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222.2 47.4% 11.2%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 221.2 83.2% 53.3%;
-  --radius: 0.5rem;
+  --background: 42 44% 92%;        /* paper #f4efe3 */
+  --foreground: 220 40% 19%;       /* ink #1d2a44 */
+
+  --card: 45 100% 98%;             /* index card #fffdf7 */
+  --card-foreground: 220 40% 19%;
+
+  --popover: 45 100% 98%;
+  --popover-foreground: 220 40% 19%;
+
+  --primary: 218 47% 26%;          /* ink blue #243b63 */
+  --primary-hover: 218 52% 19%;
+  --primary-foreground: 45 100% 98%;
+
+  --secondary: 43 41% 87%;         /* deeper paper #ebe3cf */
+  --secondary-foreground: 220 40% 19%;
+
+  --muted: 43 41% 87%;
+  --muted-foreground: 41 13% 37%;  /* pencil #6b6352 */
+
+  --accent: 49 84% 81%;            /* note paper */
+  --accent-foreground: 220 40% 19%;
+
+  --destructive: 9 61% 45%;        /* red pencil #b8412c */
+  --destructive-foreground: 45 100% 98%;
+
+  --supports: 152 39% 30%;         /* green ink #2f6b4f */
+  --challenges: 9 61% 45%;         /* red pencil */
+  --context: 42 9% 38%;            /* graphite */
+
+  --highlighter: 50 83% 72%;       /* #f3de7a */
+  --rule: 42 30% 84%;              /* ruled lines #e3dccb */
+  --tape: 44 45% 84%;
+
+  --border: 42 28% 79%;
+  --input: 40 16% 50%;             /* 3:1 against paper, per WCAG 1.4.11 */
+  --ring: 218 47% 26%;
+
+  --radius: 0.25rem;
+}
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-hover: hsl(var(--primary-hover));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-supports: hsl(var(--supports));
+  --color-challenges: hsl(var(--challenges));
+  --color-context: hsl(var(--context));
+  --color-highlighter: hsl(var(--highlighter));
+  --color-rule: hsl(var(--rule));
+  --color-tape: hsl(var(--tape));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-md: var(--radius);
+  --radius-sm: calc(var(--radius) - 1px);
+
+  --font-sans: var(--font-plex-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-newsreader), Georgia, serif;
+  --font-tag: var(--font-plex-mono), ui-monospace, monospace;
+  --font-hand: var(--font-kalam), "Comic Neue", cursive;
+
+  /* Hard, blur-free shadows, like paper lying on paper. */
+  --shadow-paper: 2px 3px 0 hsl(var(--border));
+  --shadow-paper-lift: 3px 5px 0 hsl(var(--border));
+  --shadow-ink: 2px 2px 0 hsl(var(--foreground));
 }
 
 @layer base {
   * {
     border-color: hsl(var(--border));
   }
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
+    /* Guard against any stray wide element creating sideways scroll.
+       `clip` (unlike `hidden`) keeps position: sticky working. */
+    overflow-x: clip;
+  }
+  ::selection {
+    background: hsl(var(--highlighter));
+    color: hsl(var(--foreground));
+  }
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
   }
 }
 
-/* Custom Typography Utilities */
-@layer utilities {
-  .font-sans {
-    font-family: var(--font-inter), sans-serif;
+@layer components {
+  /* Shared form controls, so every page uses the same field styling. */
+  .field-label {
+    @apply font-sans text-sm font-medium text-foreground;
   }
-  .font-heading {
-    font-family: var(--font-heading), serif;
+  .field-hint {
+    @apply font-sans text-xs text-muted-foreground;
   }
-  .font-tag {
-    font-family: var(--font-tag), monospace;
+  .field-input {
+    @apply w-full min-w-0 rounded-md border border-input bg-card px-3 py-2.5 font-sans text-base text-foreground sm:text-sm;
+    @apply placeholder:text-muted-foreground focus:border-foreground focus:outline-none focus:ring-2 focus:ring-highlighter disabled:opacity-60;
   }
+  .eyebrow {
+    @apply font-tag text-[11px] font-medium uppercase tracking-[0.14em] text-muted-foreground;
+  }
+  .page-container {
+    @apply mx-auto w-full max-w-6xl px-4 sm:px-6;
+  }
+
+  /* Graph paper, for the canvas and illustrations. */
+  .paper-graph {
+    background-color: hsl(var(--background));
+    background-image:
+      linear-gradient(hsl(var(--rule)) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--rule)) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+  /* A ruled notebook page with a red margin line. */
+  .paper-ruled {
+    background-color: hsl(var(--background));
+    background-image:
+      linear-gradient(90deg, transparent 2.25rem, hsl(var(--destructive) / 0.35) 2.25rem, hsl(var(--destructive) / 0.35) calc(2.25rem + 1px), transparent calc(2.25rem + 1px)),
+      linear-gradient(hsl(var(--rule)) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 1.75rem;
+  }
+
+  /* Links underline with a pencil squiggle on hover instead of fading. */
+  .link-pencil {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='6' viewBox='0 0 14 6'%3E%3Cpath d='M0 3 Q3.5 0.6 7 3 T14 3' fill='none' stroke='%231d2a44' stroke-width='1.3' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: repeat-x;
+    background-position: 0 100%;
+    background-size: 14px 0;
+    padding-bottom: 3px;
+    transition: background-size 120ms ease-out;
+  }
+  .link-pencil:hover,
+  .link-pencil:focus-visible {
+    background-size: 14px 6px;
+  }
+
+  /* An index card: paper, rule under the label, a hard shadow. */
+  .index-card {
+    @apply rounded-sm border border-border bg-card;
+    box-shadow: var(--shadow-paper);
+  }
+  .index-card-lift {
+    transition: transform 140ms ease-out, box-shadow 140ms ease-out;
+  }
+  .index-card-lift:hover {
+    transform: rotate(0deg) translateY(-1px) !important;
+    box-shadow: var(--shadow-paper-lift);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
+}
+
+/* React Flow: match the paper theme. */
+.react-flow__attribution {
+  background: transparent !important;
+  font-family: var(--font-plex-mono);
+  font-size: 10px;
+}
+.react-flow__attribution a {
+  color: hsl(var(--muted-foreground)) !important;
+}
+.react-flow__node.selected > div,
+.react-flow__node:focus-visible > div {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 3px;
+}
+.react-flow__edge.selected .hand-edge-path {
+  stroke-width: 2.6;
 }

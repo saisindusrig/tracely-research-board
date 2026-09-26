@@ -1,25 +1,46 @@
-import type { Metadata } from "next";
-import { Inter, Libre_Baskerville, Share_Tech_Mono } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { IBM_Plex_Mono, IBM_Plex_Sans, Kalam, Newsreader } from "next/font/google";
+import Toaster from "@/components/Toaster";
 import "./globals.css";
 
-// 1. Configure the Google Fonts
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-
-const libreBaskerville = Libre_Baskerville({ 
-  weight: ["400", "700"], 
-  subsets: ["latin"], 
-  variable: "--font-heading" 
+const plexSans = IBM_Plex_Sans({
+  weight: ["400", "500", "600"],
+  subsets: ["latin"],
+  variable: "--font-plex-sans",
 });
 
-const shareTechMono = Share_Tech_Mono({ 
-  weight: "400", 
-  subsets: ["latin"], 
-  variable: "--font-tag" 
+const newsreader = Newsreader({
+  weight: ["400", "500", "600"],
+  style: ["normal"],
+  subsets: ["latin"],
+  variable: "--font-newsreader",
+});
+
+const plexMono = IBM_Plex_Mono({
+  weight: ["400", "500"],
+  subsets: ["latin"],
+  variable: "--font-plex-mono",
+});
+
+// Handwriting, used only for margin notes and annotations.
+const kalam = Kalam({
+  weight: ["400"],
+  subsets: ["latin"],
+  variable: "--font-kalam",
 });
 
 export const metadata: Metadata = {
-  title: "TracelyResearchBoard",
-  description: "Collaborative research and evidence platform",
+  title: {
+    template: "%s · Warrant",
+    default: "Warrant: a research notebook for claims and evidence",
+  },
+  description:
+    "Warrant is a visual research notebook. Pin claims, sources and notes to one page, draw the lines between them, and see what the evidence actually says.",
+  applicationName: "Warrant",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#f4efe3",
 };
 
 export default function RootLayout({
@@ -29,9 +50,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      {/* 2. Inject the font variables into the app body */}
-      <body className={`${inter.variable} ${libreBaskerville.variable} ${shareTechMono.variable} font-sans antialiased`}>
+      <body
+        className={`${plexSans.variable} ${newsreader.variable} ${plexMono.variable} ${kalam.variable} font-sans antialiased`}
+      >
         {children}
+        <Toaster />
       </body>
     </html>
   );

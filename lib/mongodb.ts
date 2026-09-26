@@ -3,11 +3,7 @@ import mongoose from "mongoose";
 
 dns.setDefaultResultOrder("ipv4first");
 
-const MONGODB_URI = process.env.MONGODB_URI as string;
-
-if (!MONGODB_URI) {
-  throw new Error("Please define the MONGODB_URI environment variable inside .env.local");
-}
+import { env } from "@/lib/env";
 
 type MongooseCache = {
   conn: typeof mongoose | null;
@@ -33,7 +29,7 @@ export async function connectToDatabase() {
   }
 
   if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGODB_URI, {
+    cached.promise = mongoose.connect(env.MONGODB_URI, {
       family: 4,
       serverSelectionTimeoutMS: 15000,
     });

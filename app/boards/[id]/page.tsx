@@ -1,92 +1,142 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import { connectToDatabase } from "@/lib/mongodb";
-import Board from "@/models/Boards";
-import Claim from "@/models/Claim"; 
-import CreateClaimForm from "@/components/CreateClaimForm"; 
-import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { notFound, redirect } from "next/navigation";
+import { isValidObjectId } from "mongoose";
+import { getCurrentUser } from "@/lib/auth";
+import { getBoardAccess } from "@/lib/permissions";
+import Claim from "@/models/Claim";
+import Source from "@/models/Sources";
+import Evidence from "@/models/Evidence";
+import Note from "@/models/Note";
+import Comment from "@/models/Comment";
+import "@/models/User";
+import Logo from "@/components/Logo";
+import { buttonVariants } from "@/components/ui/button";
+import BoardWorkspace from "@/components/workspace/BoardWorkspace";
+import type { BoardData, CardType, Selection } from "@/components/workspace/types";
 
-export default async function BoardWorkspacePage({ params }: { params: Promise<{ id: string }> }) {
-  const session = await getServerSession(authOptions);
-  if (!session || !session.user?.id) {
-    redirect("/api/auth/signin");
-  }
+type Params = { params: Promise<{ id: string }> };
 
+export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { id } = await params;
+  const user = await getCurrentUser();
+  const access = await getBoardAccess(id, user?.id);
+  if (!access) return { title: "Board not found" };
+  // Don't leak private board names through the tab title or link previews.
+  if (!access.canView) return { title: "Private board", robots: { index: false } };
+  return {
+    title: access.board.title,
+    description:
+      access.board.description ||
+      `A research board on Warrant mapping claims, sources and evidence${access.board.topic ? ` about ${access.board.topic}` : ""}.`,
+    robots: access.board.isPublic ? undefined : { index: false },
+  };
+}
 
-  await connectToDatabase();
-  
-  let board = null;
-  let claims = []; 
-  
-  try {
-    board = await Board.findById(id);
-    claims = await Claim.find({ boardId: id }).sort({ createdAt: -1 });
-  } catch (error) {
-    console.error("Database error:", error);
-  }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type Doc = any;
 
-  if (!board) {
-    redirect("/dashboard");
-  }
+const iso = (d: Date | string) => new Date(d).toISOString();
+const pos = (p?: { x?: number; y?: number }) =>
+  p && typeof p.x === "number" && typeof p.y === "number" ? { x: p.x, y: p.y } : null;
 
-  if (board.owner.toString() !== session.user.id && !board.isPublic) {
+export default async function BoardWorkspacePage({
+  params,
+  searchParams,
+}: Params & { searchParams: Promise<{ card?: string; created?: string }> }) {
+  const [{ id }, { card, created }] = await Promise.all([params, searchParams]);
+  const user = await getCurrentUser();
+  const access = await getBoardAccess(id, user?.id);
+  if (!access) notFound();
+
+  if (!access.canView) {
+    if (!user) redirect(`/login?callbackUrl=/boards/${id}`);
     return (
-      <main className="flex min-h-screen items-center justify-center bg-slate-50 font-sans">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold font-heading text-red-600 mb-2">Access Denied 🛑</h1>
-          <p className="text-slate-600 mb-4">You do not have permission to view this board.</p>
-          <Link href="/dashboard">
-            <Button>Back to Dashboard</Button>
-          </Link>
-        </div>
+      <main className="flex min-h-dvh flex-col items-center justify-center px-4 text-center">
+        <Logo />
+        <h1 className="mt-10 font-heading text-3xl text-foreground">This board is private.</h1>
+        <p className="mt-3 max-w-sm text-muted-foreground">Ask the owner to invite you, then open the link again.</p>
+        <Link href="/dashboard" className={buttonVariants({ className: "mt-8" })}>
+          Back to your dashboard
+        </Link>
       </main>
     );
   }
 
+  const { board } = access;
+  const [claims, sources, notes, evidence, comments] = await Promise.all([
+    Claim.find({ boardId: id }).sort({ createdAt: 1 }).populate("author", "name").lean<Doc[]>(),
+    Source.find({ boardId: id }).sort({ createdAt: 1 }).populate("author", "name").lean<Doc[]>(),
+    Note.find({ boardId: id }).sort({ createdAt: 1 }).populate("author", "name").lean<Doc[]>(),
+    Evidence.find({ boardId: id }).lean<Doc[]>(),
+    Comment.find({ boardId: id }).sort({ createdAt: 1 }).populate("author", "name image").lean<Doc[]>(),
+  ]);
+
+  const data: BoardData = {
+    claims: claims.map((c) => ({
+      id: String(c._id),
+      title: c.title,
+      description: c.description || undefined,
+      tags: c.tags ?? [],
+      status: c.status ?? "UNVERIFIED",
+      authorName: c.author?.name,
+      createdAt: iso(c.createdAt),
+      position: pos(c.position),
+    })),
+    sources: sources.map((s) => ({
+      id: String(s._id),
+      title: s.title,
+      url: s.url || undefined,
+      sourceType: s.sourceType ?? "Website",
+      summary: s.summary || undefined,
+      authorName: s.author?.name,
+      createdAt: iso(s.createdAt),
+      position: pos(s.position),
+    })),
+    notes: notes.map((n) => ({
+      id: String(n._id),
+      content: n.content,
+      authorName: n.author?.name,
+      createdAt: iso(n.createdAt),
+      position: pos(n.position),
+    })),
+    evidence: evidence.map((e) => ({
+      id: String(e._id),
+      claimId: String(e.claimId),
+      sourceId: String(e.sourceId),
+      relationship: e.relationship,
+      explanation: e.explanation || undefined,
+    })),
+    comments: comments.map((c) => ({
+      id: String(c._id),
+      targetId: String(c.targetId),
+      authorName: c.author?.name ?? "Former member",
+      authorImage: c.author?.image,
+      content: c.content,
+      createdAt: iso(c.createdAt),
+    })),
+  };
+
+  // `?card=claim:<id>` (used by search results) opens that card's details.
+  let initialCard: Selection = null;
+  const [cardType, cardId] = card?.split(":") ?? [];
+  if (["claim", "source", "note", "evidence"].includes(cardType) && isValidObjectId(cardId)) {
+    initialCard = { type: cardType as CardType, id: cardId };
+  }
+
   return (
-    <main className="flex h-screen flex-col bg-slate-100 font-sans">
-      <header className="bg-white border-b border-slate-200 px-8 py-4 flex justify-between items-center shrink-0">
-        <div>
-          <h1 className="text-xl font-bold font-heading text-slate-900">{board.title}</h1>
-          {board.description && (
-            <p className="text-xs text-slate-500 mt-1">{board.description}</p>
-          )}
-        </div>
-        <Link href="/dashboard">
-          <Button variant="outline" size="sm">Back to Dashboard</Button>
-        </Link>
-      </header>
-
-      <div className="flex-1 p-8 overflow-x-auto flex gap-6 items-start">
-        
-        <CreateClaimForm boardId={id} />
-
-        {claims.map((claim) => (
-          <div key={claim._id.toString()} className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm w-72 shrink-0">
-            <div className="flex justify-between items-start mb-3">
-              <span className="font-tag text-xs tracking-widest text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                #CLAIM
-              </span>
-              <span className="font-tag text-[10px] text-slate-400">
-                {claim.status}
-              </span>
-            </div>
-            
-            <h3 className="font-heading font-bold text-slate-900 text-lg mb-2 leading-tight">
-              {claim.title}
-            </h3>
-            
-            {claim.description && (
-              <p className="font-sans text-xs text-slate-600 leading-relaxed">
-                {claim.description}
-              </p>
-            )}
-          </div>
-        ))}
-      </div>
-    </main>
+    <BoardWorkspace
+      board={{ id, title: board.title, description: board.description || undefined, isPublic: board.isPublic }}
+      data={data}
+      perms={{
+        signedIn: Boolean(user),
+        role: access.role,
+        canEdit: access.canEdit,
+        canComment: access.canComment,
+        isOwner: access.isOwner,
+      }}
+      initialCard={initialCard}
+      created={Boolean(created) && access.isOwner}
+    />
   );
 }
