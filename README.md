@@ -5,9 +5,9 @@
 The name comes from Toulmin's model of argument, where the *warrant* is the reasoning that connects evidence to a claim. That connection is what this app is built around.
 
 <!-- Replace with your deployed URL -->
-**Live demo:** https://your-app.vercel.app · **Demo account:** `demo@warrant.dev` (password shared on request)
+**Live demo:** https://warrant-research-board.vercel.app ·
 
-![CI](https://github.com/<your-github-username>/warrant/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/saisindusrig/warrant-research-board/actions/workflows/ci.yml/badge.svg)
 
 <!-- Generate with: node --env-file=.env.local scripts/screenshots.mjs, then pick your favorites -->
 <!-- ![Canvas](docs/screenshots/board-owner-desktop.png) -->
